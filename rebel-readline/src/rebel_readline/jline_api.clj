@@ -19,7 +19,7 @@
     EndOfFileException
     EOFError
     Widget]
-   [org.jline.reader.impl LineReaderImpl DefaultParser BufferImpl]
+   [org.jline.reader.impl LineReaderImpl]
    [org.jline.terminal Terminal TerminalBuilder Attributes Attributes$LocalFlag Attributes$InputFlag]
    [java.io Writer]
    [org.jline.utils AttributedStringBuilder AttributedString AttributedStyle]))
@@ -29,7 +29,7 @@
 (def ^:dynamic *buffer* nil)
 
 ;; helper for development
-(defn buffer*
+#_(defn buffer*
   ([s] (buffer* s nil))
   ([s c]
    (doto (BufferImpl.)
