@@ -5,6 +5,7 @@
   (:import
    [org.jline.keymap KeyMap]
    [org.jline.reader
+    Buffer
     Highlighter
     Completer
     Candidate
@@ -20,7 +21,6 @@
     Widget]
    [org.jline.reader.impl LineReaderImpl DefaultParser BufferImpl]
    [org.jline.terminal Terminal TerminalBuilder Attributes Attributes$LocalFlag Attributes$InputFlag]
-   [org.jline.terminal.impl DumbTerminal]
    [java.io Writer]
    [org.jline.utils AttributedStringBuilder AttributedString AttributedStyle]))
 
@@ -48,7 +48,7 @@
 ;; ----------------------------------------
 
 (defn assert-system-terminal [terminal]
-  (when (instance? DumbTerminal terminal)
+  (when (= "dumb" (.getType ^Terminal terminal))
     (throw (ex-info
 "Unable to detect a system Terminal, you must not launch the Rebel readline
 from an intermediate process.
@@ -98,19 +98,18 @@ If you are using `lein` you may need to use `lein trampoline`."
        (apply [_#]
          (widget-exec line-reader# (fn [] ~@body))))))
 
-;; very naive
 (def get-accessible-field
   (memoize (fn [obj field-name]
-             (or (when-let [field (-> obj
-                                      .getClass
-                                      .getSuperclass
-                                      (.getDeclaredField field-name))]
-                   (doto field
-                     (.setAccessible true)))))))
+             (loop [clazz (.getClass obj)]
+               (when clazz
+                 (if-let [field (try (.getDeclaredField clazz field-name)
+                                     (catch Exception _ nil))]
+                   (doto field (.setAccessible true))
+                   (recur (.getSuperclass clazz))))))))
 
 (defn supplier [f]
-  (proxy [java.util.function.Supplier] []
-    (get [] (f))))
+  (reify java.util.function.Supplier
+    (get [_] (f))))
 
 ;; --------------------------------------
 ;; Key maps
